@@ -1,0 +1,109 @@
+Create Api in node js
+---------------------
+step 1 : npm init = for creating the node modules
+step 2 : npm install express
+step 3 : npm install nodemon | npm install cors | npm install mongoose
+
+step 4: create a models folder for schema 
+
+models=> Users.js create a file
+-------------------------------
+const mongoose = require("mongoose");
+const userSchema = new mongoose.Schema({
+    username:String,
+    emailid: String,
+    dob: String,
+    city: String
+})
+
+const userModel = mongoose.model("registration",userSchema);
+
+module.exports = userModel;
+
+
+step 5: create a crud operation with mongodb
+------------------------------------------
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+
+
+  
+const userModel=require("./models/Users");
+
+const app = express()
+app.use(cors())
+app.use(express.json())
+
+
+
+ const CONNECTION_URL = "mongodb://127.0.0.1:27017/teacher"
+// mongoose.connect('mongodb://127.0.0.1:27017/teacher').then(() => app.listen((resp) => console.log(`Server running on port`,resp)))
+//     .catch((error) => console.log(error.message));
+
+
+mongoose.connect(CONNECTION_URL)
+    .then(() => app.listen((resp) => console.log(`Server running on port`)))
+    .catch((error) => console.log(error.message));
+
+
+       
+app.get('/getUsers',(req,res)=>{
+    userModel.find().then(users=>res.json(users)).catch(error=>res.json(error))
+})
+
+
+app.post('/getUsers', async(req, res) => {
+    // You can access the request body data using req.body
+    const newData = new userModel({
+        username:req.body.username,
+        emailid: req.body.emailid,
+        dob: req.body.dob,
+        city: req.body.city 
+    })
+
+   try{
+    const savedItem = await newData.save();
+    res.json({ message: 'Data received',savedItem });
+   }catch (error) {
+    res.status(500).json({ message: 'Error creating item', error: error.message });
+  }
+   
+  });
+
+
+// Read a specific item by ID
+app.get(('/getUsers/:id'), async (req,res)=>{
+    try{
+        const item = await userModel.findById(req.params.id);
+        res.json(item)
+    }catch(error){res.status(404).json({message:'item is not found',error:error.message})}
+})
+
+
+
+// Update an item by ID
+app.patch('/getUsers/:id', async (req, res) => {
+    try {
+      const updatedItem = await userModel.updateOne({ _id: req.params.id }, { $set: req.body });
+      res.json(updatedItem);
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating item', error: error.message });
+    }
+  });
+  
+  // Delete an item by ID
+  app.delete('/getUsers/:id', async (req, res) => {
+    try {
+      const removedItem = await userModel.deleteOne({ _id: req.params.id });
+      res.json(removedItem);
+    } catch (error) {
+      res.status(500).json({ message: 'Error deleting item', error: error.message });
+    }
+  });
+
+
+
+app.listen("5000",()=>{
+    console.log("server is running.")
+})
